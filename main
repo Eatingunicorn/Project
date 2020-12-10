@@ -1,0 +1,331 @@
+#define _CRT_SECURE_NO_WARNINGS
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#define MAXIMUM_NUMBER_OF_COLORS 7
+#define MAXIMUM_NUMBER_OF_CHARACTERS_IN_COLOR_NAME 7
+#define MAXIMUM_NUMBER_OF_CHARACTERS_IN_LINE 400
+#define MAXIMUM_NUMBER_OF_CARD_VALUES 20
+#define MAXIMUM_NUMBER_OF_PILES 6
+#define MAXIMUM_NUMBER_OF_CARDS_IN_HAND 30
+
+void readingInputLine(int* activePlayer){
+        char textLine[MAXIMUM_NUMBER_OF_CHARACTERS_IN_LINE];
+        int counter=0,temporaryValue=0;
+        fgets(textLine, MAXIMUM_NUMBER_OF_CHARACTERS_IN_LINE, stdin);
+        while (textLine[counter] != '\0')
+        {
+                if (textLine[counter] > 47 && textLine[counter]<58) //checking if a sign is a number
+                {
+                        if (textLine[counter+1] > 47 && textLine[counter+1] < 58) //checking if next a sign is a number (numbers over 10)
+                        {
+                                if (textLine[counter + 2] > 47 && textLine[counter + 2] < 58)
+                                {
+                                        temporaryValue = ((int)textLine[counter] - 48);
+                                        temporaryValue *= 100; 
+                                        *activePlayer = temporaryValue;
+                                        temporaryValue = ((int)textLine[counter + 1] - 48); 
+                                        temporaryValue *= 10;
+                                        *activePlayer += temporaryValue; 
+                                        temporaryValue = ((int)textLine[counter + 2] - 48);
+                                        *activePlayer += temporaryValue;
+                                }
+                                else
+                                {
+                                        temporaryValue = ((int)textLine[counter] - 48);
+                                        temporaryValue *= 10; //the number of tens
+                                        *activePlayer = temporaryValue;
+                                        temporaryValue = ((int)textLine[counter + 1] - 48); //number of unity
+                                        *activePlayer += temporaryValue; //sum
+                                }
+                                break;
+                        }
+                        else
+                        {
+                                *activePlayer = (int)textLine[counter] - 48;
+                                break;
+                        }
+                }
+                counter++;
+        }
+
+}
+
+
+void redingValuesOfCards(char colorsName[MAXIMUM_NUMBER_OF_COLORS][MAXIMUM_NUMBER_OF_CHARACTERS_IN_COLOR_NAME], char textLine[MAXIMUM_NUMBER_OF_CHARACTERS_IN_LINE], int** cardsInHand, int numberOfPlayer) {
+        int counter = 0, counter2 = 1, counter3 = 0;
+        while (textLine[counter] != '\0')
+        {
+                for (int i = 0; i < MAXIMUM_NUMBER_OF_COLORS; i++)
+                {
+                        if (textLine[counter] == colorsName[i][0] && textLine[counter + 1] == colorsName[i][1] && textLine[counter + 2] == colorsName[i][2])
+                        {
+                                while (true) //cheking card value
+                                {
+                                        if (textLine[counter - counter2] > 47 && textLine[counter - counter2] < 58)
+                                        {
+                                                if (textLine[counter - (counter2 + 1)] > 47 && textLine[counter - (counter2 + 1)] < 58) //number over 10
+                                                {
+                                                        (*(*(cardsInHand + numberOfPlayer) + counter3)) = (((int)textLine[counter - counter2] - 48) + (((int)textLine[counter - (counter2 + 1)] - 48) * 10) + ((i + 1) * 100));
+                                                }
+                                                else
+                                                {
+                                                        (*(*(cardsInHand + numberOfPlayer) + counter3)) = (((int)textLine[counter - counter2] - 48) + ((i + 1) * 100));; //number under 10
+                                                }
+                                                counter3++;
+                                                break;
+                                        }
+                                        else
+                                        {
+                                                counter2++;
+                                        }
+                                }
+                                counter += 2;
+                        }
+                }
+                counter++;
+                counter2 = 1;
+        }
+
+
+
+}
+
+
+void redingCardValuesInColorFromHand(int numberOfPlayers, char colorsName[MAXIMUM_NUMBER_OF_COLORS][MAXIMUM_NUMBER_OF_CHARACTERS_IN_COLOR_NAME], int** cardsInHand, int** cardsInDeck){
+        char textLine[MAXIMUM_NUMBER_OF_CHARACTERS_IN_LINE];
+        for (int i = 0; i < numberOfPlayers; i++)
+        {
+                fgets(textLine, MAXIMUM_NUMBER_OF_CHARACTERS_IN_LINE, stdin); //reding cards from hand
+                redingValuesOfCards(colorsName, textLine, cardsInHand, i);
+
+                fgets(textLine, MAXIMUM_NUMBER_OF_CHARACTERS_IN_LINE, stdin); //reding cards from deck
+                redingValuesOfCards(colorsName, textLine, cardsInDeck, i);
+        }
+
+}
+
+void redingCardValuesInColorFromPile( char colorsName[MAXIMUM_NUMBER_OF_COLORS][MAXIMUM_NUMBER_OF_CHARACTERS_IN_COLOR_NAME], int** cardsOnPile, int* numberOfPiles) {
+        char textLine[MAXIMUM_NUMBER_OF_CHARACTERS_IN_LINE];
+        for(int i=0; i< MAXIMUM_NUMBER_OF_PILES; i++)
+        {
+                fgets(textLine, MAXIMUM_NUMBER_OF_CHARACTERS_IN_LINE, stdin);
+                if ((int)textLine[0]-48 != i+1) //checking if text line is empty
+                {
+                        *numberOfPiles = (i - 1);
+                        i = 10;
+                        break;
+                }
+                redingValuesOfCards(colorsName, textLine, cardsOnPile, i);
+        }
+        
+}
+
+void playerMove(int activePlayer,int numberOfPlayers,int** cardsOnPile,int** cardsInHand, int explosion, int** cardsInDeck) {
+        int card, color, counter=0, temporaryValue=0, color2, pileValue=0, counter2=0;
+        card = (*(*(cardsInHand+(activePlayer-1))+0));
+        while ((*(*(cardsInHand + (activePlayer - 1)) + counter)) != 0)
+        {
+                        (*(*(cardsInHand + (activePlayer - 1)) + counter)) = (*(*(cardsInHand + (activePlayer - 1)) + (counter + 1)));  
+                        counter++;
+        }
+        counter = 0;
+        color = (card / 100)-1;
+        if (color == 0)//green
+        {
+                while ((*(*(cardsOnPile + 0) + counter)) != 0)
+                {
+                        counter++;
+                }
+                (*(*(cardsOnPile + 0) + counter)) = card;
+        }
+        else
+        {
+                for (int i = 0; i < MAXIMUM_NUMBER_OF_PILES; i++)
+                {
+                        while ((*(*(cardsOnPile + i) + counter)) != 0)
+                        {
+                                color2= (((*(*(cardsOnPile + i) + counter))/100)-1);
+                                if (color2 == color)
+                                {
+                                        temporaryValue = 1;
+                                }
+                                else if(color2==0)
+                                {
+                                        temporaryValue = 1;
+                                }
+                                else
+                                {
+                                        temporaryValue = 0;
+                                }
+                                pileValue += ((*(*(cardsOnPile + i) + counter))-((*(*(cardsOnPile + i) + counter)/100)));
+                                counter++;
+                        }
+                        if (temporaryValue == 1)
+                        {
+                                (*(*(cardsOnPile + i) + counter)) = card;
+                                pileValue += (card - (card / 100));
+                                if (pileValue >= explosion)
+                                {
+                                        while ((*(*(cardsInDeck + (activePlayer-1)) + counter2)) != 0)
+                                        {
+                                                counter2++;
+                                        }
+                                        for (int j = counter2; j <=counter; j++)
+                                        {
+                                                (*(*(cardsInDeck + (activePlayer-1)) + j)) = (*(*(cardsOnPile + i) + (j - counter2)));
+                                                (*(*(cardsOnPile + i) + (j - counter2))) = 0;
+                                        }
+                                }
+                                i = MAXIMUM_NUMBER_OF_PILES+1;
+                        }
+                        counter = 0;
+                        temporaryValue = 0;
+                }
+        }
+        
+}
+
+void decoder(int card, char colorsName[MAXIMUM_NUMBER_OF_COLORS][MAXIMUM_NUMBER_OF_CHARACTERS_IN_COLOR_NAME])
+{
+        int color;
+        color = card / 100;
+        printf("%d %s ", (card - (color * 100)), colorsName[color - 1]);
+}
+
+void output(char colorsName[MAXIMUM_NUMBER_OF_COLORS][MAXIMUM_NUMBER_OF_CHARACTERS_IN_COLOR_NAME], int activePlayer, int numberOfPlayers, int explosionThreshold, int** cardsOnPile, int** cardsInHand, int numberOfPiles, int** cardsInDeck) {
+        int counter = 0;
+        printf("active player = %d\n", activePlayer);
+        printf("players number = %d\n", numberOfPlayers);
+        printf("explosion threshold = %d", explosionThreshold);
+        for (int i = 0; i < numberOfPlayers; i++)
+        {
+                printf("\n%d player hand cards: ", i+1);
+                while((*(*(cardsInHand + i) + counter)) != 0)
+                {
+                        decoder((*(*(cardsInHand + i) + counter)), colorsName);
+                        counter++;
+                }
+                counter = 0;
+                printf("\n%d player deck cards: ", i+1);
+                while ((*(*(cardsInDeck + i) + counter)) != 0)
+                {
+                        decoder((*(*(cardsInDeck + i) + counter)), colorsName);
+                        counter++;
+                }
+                counter = 0;
+        }
+        for (int i = 0; i <= numberOfPiles; i++)
+        {
+                printf("\n%d pile cards: ", i+1);
+                while ((*(*(cardsOnPile + i) + counter)) != 0)
+                {
+                        //printf("card %d ", (*(*(cardsOnPile + i) + counter)));
+                        decoder((*(*(cardsOnPile + i) + counter)), colorsName);
+                        counter++;
+                }
+                counter = 0;
+        }
+}
+
+
+int main(){
+        char colorsName[MAXIMUM_NUMBER_OF_COLORS][MAXIMUM_NUMBER_OF_CHARACTERS_IN_COLOR_NAME];
+        strcpy(colorsName[0], "green");
+        strcpy(colorsName[1], "blue");
+        strcpy(colorsName[2], "red");
+        strcpy(colorsName[3], "violet");
+        strcpy(colorsName[4], "yellow");
+        strcpy(colorsName[5], "white");
+        strcpy(colorsName[6], "black");
+
+        int activePlayer = 0, numberOfPlayers = 0, explosionThreshold, numberOfPiles=5;
+        int* temporaryPointer;
+        temporaryPointer = &activePlayer;
+        readingInputLine(temporaryPointer); //reding first line - active player = activePlayer
+
+        temporaryPointer = &numberOfPlayers;
+        readingInputLine(temporaryPointer); //reding second line - players number = numberOfPlayers
+
+        temporaryPointer = &explosionThreshold;
+        readingInputLine(temporaryPointer); //reding third line - explosion threshold = explosionThereshold
+        int** cardsInHand;
+        cardsInHand = (int**)malloc(numberOfPlayers * sizeof(int*));
+        for (int i = 0; i < numberOfPlayers; i++)
+        {
+                cardsInHand[i] = (int*)malloc(MAXIMUM_NUMBER_OF_CARDS_IN_HAND * sizeof(int));
+        }
+        for (int i = 0; i < numberOfPlayers; i++)
+        {
+                for (int j = 0; j < MAXIMUM_NUMBER_OF_CARDS_IN_HAND; j++)
+                {
+                        cardsInHand[i][j] = 0;
+                }
+        }
+
+        int** cardsInDeck;
+        cardsInDeck = (int**)malloc(numberOfPlayers * sizeof(int*));
+        for (int i = 0; i < numberOfPlayers; i++)
+        {
+                cardsInDeck[i] = (int*)malloc(MAXIMUM_NUMBER_OF_CARDS_IN_HAND * sizeof(int));
+        }
+        for (int i = 0; i < numberOfPlayers; i++)
+        {
+                for (int j = 0; j < MAXIMUM_NUMBER_OF_CARDS_IN_HAND; j++)
+                {
+                        cardsInDeck[i][j] = 0;
+                }
+        }
+
+        int** cardsOnPile;
+        cardsOnPile = (int**)malloc(MAXIMUM_NUMBER_OF_PILES * sizeof(int*));
+        for (int i = 0; i < MAXIMUM_NUMBER_OF_PILES; i++)
+        {
+                cardsOnPile[i] = (int*)malloc(MAXIMUM_NUMBER_OF_CARDS_IN_HAND * sizeof(int));
+        }
+        for (int i = 0; i < MAXIMUM_NUMBER_OF_PILES; i++)
+        {
+                for (int j = 0; j < MAXIMUM_NUMBER_OF_CARDS_IN_HAND; j++)
+                {
+                        cardsOnPile[i][j] = 0;
+                }
+        }
+
+        redingCardValuesInColorFromHand(numberOfPlayers,  colorsName, cardsInHand, cardsInDeck);
+
+        temporaryPointer = &numberOfPiles;
+        redingCardValuesInColorFromPile (colorsName, cardsOnPile, temporaryPointer);
+
+        playerMove(activePlayer, numberOfPlayers, cardsOnPile, cardsInHand, explosionThreshold, cardsInDeck);
+        if (activePlayer == numberOfPlayers)
+        {
+                activePlayer = 1;
+        }
+        else
+        {
+                activePlayer++;
+        }
+
+        output(colorsName, activePlayer, numberOfPlayers, explosionThreshold, cardsOnPile, cardsInHand, numberOfPiles, cardsInDeck);
+
+        for (int i = 0; i < numberOfPlayers; i++)
+        {
+                free(cardsInHand[i]);
+        }
+        free(cardsInHand);
+
+        for (int i = 0; i < numberOfPlayers; i++)
+        {
+                free(cardsInDeck[i]);
+        }
+        free(cardsInDeck);
+
+        for (int i = 0; i < MAXIMUM_NUMBER_OF_PILES; i++)
+        {
+                free(cardsOnPile[i]);
+        }
+        free(cardsOnPile);
+
+        return 0;
+}
